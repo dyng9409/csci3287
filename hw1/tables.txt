@@ -1,0 +1,18 @@
+time_slot
+time_slot_id varchar4
+day varchar1
+start_hr decimal 2 0
+start_min ''
+end_hr ''
+end_min ''
+
+ID vc5
+name vc20
+dept_name ref department(dept_name) vc20
+tot_cred   d 3 0
+
+ID
+name
+dept_name:
+salary 8,2
+
