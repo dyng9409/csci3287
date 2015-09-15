@@ -17,7 +17,12 @@ create table branch(
     )
 );
 
-create table loan(
-
+create table account(
+    account_number varchar(15),
+    branch_name varchar(15),
+    balance float,
+    primary key(
+        account_number
+    )
 );
 
