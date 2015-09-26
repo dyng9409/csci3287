@@ -185,7 +185,7 @@ RENAME(
 PROJECT[catalog.sid](
     DIVIDE(
         catalog,
-        partIDs
+        redIDs
     )
 )
 
@@ -222,12 +222,12 @@ RENAME(
             part
         )
     ),
-    redIDs
+    rgIDs
 )
 PROJECT[catalog.sid](
     DIVIDE(
         catalog,
-        partIDs
+        rgIDs
     )
 )
 
@@ -259,22 +259,175 @@ select distinct c.sid
 
 /*
 8.
+RENAME(
+    PROJECT[part.pid](
+        SELECT[part.color = 'Red'](
+            part
+        )
+    ),
+    redIDs
+)
+RENAME(
+    PROJECT[part.pid](
+        SELECT[part.color = 'Green'](
+            part
+        )
+    ),
+    greenIDs
+)
+PROJECT[catalog.sid](
+    UNION(
+        DIVIDE(
+            catalog,
+            redIDs
+        ),
+        DIVIDE(
+            catalog,
+            greenIDs
+        )
+    )
+)
+
 */
 
-
+select distinct c.sid
+    from catalog as c
+    where c.sid not in
+    (
+        select distinct tmp1.sid
+            from
+            (
+                select distinct c.sid
+                    from catalog as c
+                ) as tmp1
+            cross join
+            (
+                select p.pid 
+                    from part as p
+                    where p.color = 'Red'
+                ) as s
+            where (tmp1.sid, s.pid) not in
+            (
+                select c.sid, c.pid
+                    from catalog as c
+                ))
+UNION
+select distinct c.sid
+    from catalog as c
+    where c.sid not in
+    (
+        select distinct tmp1.sid
+            from
+            (
+                select distinct c.sid
+                    from catalog as c
+                ) as tmp1
+            cross join
+            (
+                select p.pid 
+                    from part as p
+                    where p.color = 'Green'
+                ) as s
+            where (tmp1.sid, s.pid) not in
+            (
+                select c.sid, c.pid
+                    from catalog as c
+                ));
 
 /*
 9.
-*/
+RENAME(catalog, c1)
+RENAME(catalog, c2)
+PROJECT[c1.sid, c2.sid](
+    SELECT[c1.pid = c2.pid, c1.cost > c2.cost, c1.sid != c2.sid](
+        CARTESIAN(
+            c1,
+            c2
+        )
+    )
+)
 
+*/
+SELECT c1.sid sid1, c2.sid sid2
+    from catalog as c1
+    cross join catalog as c2
+    where
+        c1.pid = c2.pid AND
+        c1.sid != c2.sid AND
+        c1.cost > c2.cost;
 
 
 /*
 10.
+RENAME(catalog, c1)
+RENAME(catalog, c2)
+PROJECT[c1.sid](
+    SELECT[c1.sid != c2.sid AND c1.pid = c2.pid](
+        CARTESIAN(
+            c1,
+            c2
+        )
+    )
+)
 */
 
+SELECT DISTINCT c1.pid
+    from catalog as c1
+    cross join catalog as c2
+    where
+        c1.pid = c2.pid AND
+        c1.sid != c2.sid;
 
 
 /*
 11.
+RENAME(
+    PROJECT[catalog.pid, catalog.cost](
+        SELECT[supplier.sname = 'Yosemite Sham'](
+            SELECT[catalog.sid = supplier.sid](
+                CARTESIAN(
+                    catalog,
+                    supplier
+                )
+            )
+        )
+    ),
+    t1
+)
+RENAME(
+    PROJECT[catalog.pid, catalog.cost](
+        SELECT[supplier.sname = 'Yosemite Sham'](
+            SELECT[catalog.sid = supplier.sid](
+                CARTESIAN(
+                    catalog,
+                    supplier
+                )
+            )
+        )
+    ),
+    t2
+)
+PROJECT[t1.pid](
+    SELECT[t1.cost > t2.cost](
+        CARTESIAN(
+            t1,
+            t2
+        )
+    )
+)
 */
+select t1.pid
+    from (
+        select c.pid, c.cost
+            from catalog as c
+            join supplier as s
+                on s.sid = c.sid
+            where s.sname = 'Yosemite Sham') as t1
+    cross join(
+        select c.pid, c.cost
+            from catalog as c
+            join supplier as s
+                on s.sid = c.sid
+            where s.sname = 'Yosemite Sham') as t2
+    where t1.cost > t2.cost;
+
